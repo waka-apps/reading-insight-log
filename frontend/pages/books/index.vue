@@ -36,7 +36,7 @@ const books = ref<Book[]>([
   <main class="p-6 max-w-3xl mx-auto">
     <header class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold">Books</h1>
-      <button class="px-3 py-2 rounded border">New Book</button>
+      <NuxtLink to="/books/new" class="px-3 py-2 rounded border">New Book</NuxtLink>
     </header>
 
     <ul class="space-y-3">
