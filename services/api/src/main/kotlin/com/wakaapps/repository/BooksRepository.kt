@@ -1,7 +1,7 @@
-package api.com.wakaapps.repository
+package com.wakaapps.repository
 
-import api.com.wakaapps.domain.Book
-import api.com.wakaapps.domain.BookId
+import com.wakaapps.domain.Book
+import com.wakaapps.domain.BookId
 import jakarta.inject.Singleton
 import java.time.Instant
 import java.util.UUID

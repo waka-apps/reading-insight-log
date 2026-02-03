@@ -1,4 +1,4 @@
-package api.com.wakaapps.domain
+package com.wakaapps.domain
 
 import java.time.Instant
 

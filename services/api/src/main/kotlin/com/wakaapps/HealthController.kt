@@ -1,4 +1,4 @@
-package api.com.wakaapps
+package com.wakaapps
 
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
