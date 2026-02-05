@@ -13,14 +13,10 @@ class BooksRepository {
     private val store = ConcurrentHashMap<String, Book>()
 
     fun create(title: String, author: String?): Book {
-        val now = Instant.now()
-        val book = Book(
-            id = BookId(UUID.randomUUID().toString()),
+        val book = Book.createBook(
             title = title,
-            author = author,
-            createdAt = now,
-            updatedAt = now,
-        )
+            author = author)
+
         store[book.id.value] = book
         return book
     }
