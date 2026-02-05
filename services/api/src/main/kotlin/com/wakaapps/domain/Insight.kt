@@ -2,6 +2,7 @@ package com.wakaapps.domain
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 data class Insight(
     val id: InsightId,
@@ -9,19 +10,20 @@ data class Insight(
     val quote: String,
     val interpretation: String,
     val tags: List<String>,
-    val createdAt: Instant,
     val nextReviewAt: Instant,
     val reviewIntervalDays: Int,
+    val createdAt: Instant,
+    val updatedAt: Instant,
 ) {
     companion object {
         fun createInitial(
-            id: InsightId,
             bookId: BookId,
             quote: String,
             interpretation: String,
             tags: List<String>,
-            now: Instant,
         ): Insight {
+            val now = Instant.now()
+            val id = InsightId(UUID.randomUUID().toString())
             val interval = 1
             return Insight(
                 id = id,
@@ -30,6 +32,7 @@ data class Insight(
                 interpretation = interpretation,
                 tags = tags.map { it.trim() }.filter { it.isNotEmpty() },
                 createdAt = now,
+                updatedAt = now,
                 reviewIntervalDays = interval,
                 nextReviewAt = now.plus(interval.toLong(), ChronoUnit.DAYS),
             )

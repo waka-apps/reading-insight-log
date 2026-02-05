@@ -24,19 +24,14 @@ class InsightsRepository {
         interpretation: String,
         tags: List<String>,
     ): Insight {
-        val now = Instant.now()
-        val id = InsightId(UUID.randomUUID().toString())
-
         val insight = Insight.createInitial(
-            id = id,
             bookId = bookId,
             quote = quote,
             interpretation = interpretation,
             tags = tags,
-            now = now,
         )
 
-        store[id.value] = insight
+        store[insight.id.value] = insight
         return insight
     }
 
