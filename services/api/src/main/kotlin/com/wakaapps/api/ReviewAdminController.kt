@@ -4,17 +4,34 @@ import com.wakaapps.api.dto.InsightResponse
 import com.wakaapps.api.dto.ReviewRequest
 import com.wakaapps.domain.InsightId
 import com.wakaapps.repository.InsightsRepository
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
+import java.time.Instant
 
 @Controller("/admin")
 class ReviewAdminController(
     private val insightsRepository: InsightsRepository,
 ) {
     @Get("/review/today")
-    fun today(): List<InsightResponse> =
-        insightsRepository
-            .listReviewDue()
+    fun today(@QueryValue("now") now: String?): List<InsightResponse> {
+        val baseNow = now
+            ?.takeIf { it.isNotBlank() }
+            ?.let {
+                runCatching { Instant.parse(it) }
+                    .getOrElse {
+                        throw HttpStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Invalid 'now'. Use ISO-8601 like 2026-02-11T10:00:00Z"
+                        )
+                    }
+            }
+            ?: Instant.now()
+
+        return insightsRepository
+            .listReviewDue(baseNow)
             .map { InsightResponse.fromDomain(it) }
+    }
 
     @Post("/insights/{insightId}/review")
     fun review(
