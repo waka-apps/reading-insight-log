@@ -9,7 +9,7 @@ class BooksRepository {
     private val store = ConcurrentHashMap<String, Book>()
 
     fun create(title: String, author: String?): Book {
-        val book = Book.createBook(
+        val book = Book.createInitial(
             title = title,
             author = author
         )

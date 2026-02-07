@@ -1,7 +1,7 @@
 package com.wakaapps.domain
 
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 data class Book(
     val id: BookId,
@@ -11,7 +11,7 @@ data class Book(
     val updatedAt: Instant,
 ) {
     companion object {
-        fun createBook(
+        fun createInitial(
             title: String,
             author: String?,
         ): Book {
