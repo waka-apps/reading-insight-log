@@ -15,18 +15,18 @@ class ReviewAdminController(
 ) {
     @Get("/review/today")
     fun today(@QueryValue("now") now: String?): List<InsightResponse> {
-        val baseNow = if (now.isNullOrBlank()) {
-            Instant.now()
-        } else {
-            try {
-                Instant.parse(now)
-            } catch (_: Exception) {
-                throw HttpStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid 'now'. Use ISO-8601 like 2026-02-11T10:00:00Z"
-                )
+        val baseNow = now
+            ?.takeIf { it.isNotBlank() }
+            ?.let {
+                runCatching { Instant.parse(it) }
+                    .getOrElse {
+                        throw HttpStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Invalid 'now'. Use ISO-8601 like 2026-02-11T10:00:00Z"
+                        )
+                    }
             }
-        }
+            ?: Instant.now()
 
         return insightsRepository
             .listReviewDue(baseNow)
