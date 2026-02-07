@@ -1,26 +1,19 @@
 package com.wakaapps.repository
 
 import com.wakaapps.domain.Book
-import com.wakaapps.domain.BookId
 import jakarta.inject.Singleton
-import java.time.Instant
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.sortedByDescending
 
 @Singleton
 class BooksRepository {
     private val store = ConcurrentHashMap<String, Book>()
 
     fun create(title: String, author: String?): Book {
-        val now = Instant.now()
-        val book = Book(
-            id = BookId(UUID.randomUUID().toString()),
+        val book = Book.createInitial(
             title = title,
-            author = author,
-            createdAt = now,
-            updatedAt = now,
+            author = author
         )
+
         store[book.id.value] = book
         return book
     }
