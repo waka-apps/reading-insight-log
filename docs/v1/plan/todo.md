@@ -42,7 +42,7 @@
 ### 2.1 APIプロジェクト初期化
 
 - [ ] Kotlinプロジェクト作成（services/api）
-- [ ] Ktor（推奨）でHTTPサーバ起動
+- [ ] MicronautでHTTPサーバ起動
 - [ ] ヘルスチェック `/health` 実装
 
 ### 2.2 ドメインモデル
