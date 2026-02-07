@@ -6,7 +6,6 @@ import com.wakaapps.domain.InsightId
 import com.wakaapps.domain.ReviewResult
 import jakarta.inject.Singleton
 import java.time.Instant
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 @Singleton
