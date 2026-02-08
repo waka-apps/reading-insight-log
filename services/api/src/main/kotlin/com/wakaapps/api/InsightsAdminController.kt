@@ -5,6 +5,7 @@ import com.wakaapps.api.dto.InsightResponse
 import com.wakaapps.domain.BookId
 import com.wakaapps.repository.InsightsRepository
 import io.micronaut.http.annotation.*
+import jakarta.validation.Valid
 
 @Controller("/admin")
 class InsightsAdminController(
@@ -13,7 +14,7 @@ class InsightsAdminController(
     @Post("/books/{bookId}/insights")
     fun addInsight(
         @PathVariable bookId: String,
-        @Body req: CreateInsightRequest,
+        @Body @Valid req: CreateInsightRequest,
     ): InsightResponse {
         val insight = insightsRepository.add(
             bookId = BookId(bookId),
