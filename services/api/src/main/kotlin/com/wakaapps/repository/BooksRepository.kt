@@ -1,6 +1,7 @@
 package com.wakaapps.repository
 
 import com.wakaapps.domain.Book
+import com.wakaapps.domain.BookId
 import jakarta.inject.Singleton
 import java.util.concurrent.ConcurrentHashMap
 
@@ -20,4 +21,7 @@ class BooksRepository {
 
     fun list(): List<Book> =
         store.values.sortedByDescending { it.updatedAt }
+
+    fun findById(id: BookId): Book? = store[id.value]
+
 }

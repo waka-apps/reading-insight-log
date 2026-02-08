@@ -33,6 +33,12 @@ dependencies {
     runtimeOnly("org.yaml:snakeyaml")
 }
 
+allOpen {
+    // Allow Micronaut AOP (e.g. validation) to create proxies for these classes/methods.
+    annotation("io.micronaut.http.annotation.Controller")
+    annotation("io.micronaut.validation.Validated")
+    annotation("jakarta.inject.Singleton")
+}
 
 application {
     mainClass = "api.ApplicationKt"
@@ -69,5 +75,4 @@ micronaut {
 tasks.named<io.micronaut.gradle.docker.NativeImageDockerfile>("dockerfileNative") {
     jdkVersion = "21"
 }
-
 
