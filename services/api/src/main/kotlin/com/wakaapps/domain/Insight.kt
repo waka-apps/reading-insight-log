@@ -2,7 +2,7 @@ package com.wakaapps.domain
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.UUID
+import java.util.*
 
 data class Insight(
     val id: InsightId,
@@ -28,8 +28,8 @@ data class Insight(
             return Insight(
                 id = id,
                 bookId = bookId,
-                quote = quote,
-                interpretation = interpretation,
+                quote = quote.trim(),
+                interpretation = interpretation.trim(),
                 tags = tags.map { it.trim() }.filter { it.isNotEmpty() },
                 createdAt = now,
                 updatedAt = now,

@@ -20,8 +20,8 @@ data class Book(
 
             return Book(
                 id = id,
-                title = title,
-                author = author,
+                title = title.trim(),
+                author = author?.trim()?.takeIf { it.isNotEmpty() },
                 createdAt = now,
                 updatedAt = now,
             )
