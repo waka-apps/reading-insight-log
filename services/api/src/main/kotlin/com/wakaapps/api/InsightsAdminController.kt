@@ -6,9 +6,11 @@ import com.wakaapps.domain.BookId
 import com.wakaapps.repository.BooksRepository
 import com.wakaapps.repository.InsightsRepository
 import io.micronaut.http.annotation.*
+import io.micronaut.validation.Validated
 import jakarta.validation.Valid
 
 @Controller("/admin")
+@Validated
 class InsightsAdminController(
     private val insightsRepository: InsightsRepository,
     private val booksRepository: BooksRepository,
