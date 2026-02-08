@@ -3,11 +3,14 @@ package com.wakaapps.api.dto
 import com.wakaapps.domain.Insight
 import com.wakaapps.domain.ReviewResult
 import io.micronaut.serde.annotation.Serdeable
+import jakarta.validation.constraints.NotBlank
 import java.time.Instant
 
 @Serdeable
 data class CreateInsightRequest(
+    @field:NotBlank
     val quote: String,
+    @field:NotBlank
     val interpretation: String,
     val tags: List<String>? = null,
 )
