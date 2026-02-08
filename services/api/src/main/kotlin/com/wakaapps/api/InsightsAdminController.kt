@@ -5,7 +5,9 @@ import com.wakaapps.api.dto.InsightResponse
 import com.wakaapps.domain.BookId
 import com.wakaapps.repository.BooksRepository
 import com.wakaapps.repository.InsightsRepository
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.validation.Validated
 import jakarta.validation.Valid
 
@@ -21,7 +23,7 @@ class InsightsAdminController(
         @Body @Valid req: CreateInsightRequest,
     ): InsightResponse {
         booksRepository.findById(BookId(bookId))
-            ?: throw IllegalArgumentException("Book not found: $bookId")
+            ?: throw HttpStatusException(HttpStatus.NOT_FOUND, "Book not found: $bookId")
 
         val insight = insightsRepository.add(
             bookId = BookId(bookId),
