@@ -1,6 +1,28 @@
 <script setup lang="ts">
+import type { Insight } from "~/types/insight";
+
 const route = useRoute();
 const bookId = computed(() => String(route.params.bookId));
+
+const api = useApi();
+
+const pending = ref(true);
+const error = ref<string | null>(null);
+const insights = ref<Insight[]>([]);
+
+async function load() {
+  pending.value = true;
+  error.value = null;
+  try {
+    insights.value = await api.get<Insight[]>(`/admin/books/${bookId.value}/insights`);
+  } catch (e) {
+    error.value = (e as Error).message;
+  } finally {
+    pending.value = false;
+  }
+}
+
+onMounted(load);
 </script>
 
 <template>
