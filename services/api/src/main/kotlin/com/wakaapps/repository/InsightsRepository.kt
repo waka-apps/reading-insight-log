@@ -73,4 +73,17 @@ class InsightsRepository {
 
     fun findById(insightId: InsightId): Insight? =
         store[insightId.value]
+
+    fun countByBooks(bookIds: List<BookId>): Map<BookId, Int> {
+        if (bookIds.isEmpty()) {
+            return emptyMap()
+        }
+
+        val bookIdSet = bookIds.toSet()
+        return store.values
+            .asSequence()
+            .filter { it.bookId in bookIdSet }
+            .groupingBy { it.bookId }
+            .eachCount()
+    }
 }
