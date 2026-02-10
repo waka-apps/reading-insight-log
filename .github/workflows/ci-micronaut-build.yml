@@ -1,10 +1,6 @@
 name: Micronaut Build
 
 on:
-  push:
-    paths:
-      - "services/api/**"
-      - ".github/workflows/ci-micronaut-build.yml"
   pull_request:
     paths:
       - "services/api/**"
