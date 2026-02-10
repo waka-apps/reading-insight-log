@@ -1,5 +1,10 @@
 micronaut:
   server:
+    netty:
+      access-logger:
+        enabled: true
+        logger-name: ACCESS_LOG
+        log-format: 'remote=%h request="%r" status=%s bytes=%b durationMicros=%D'
     cors:
       enabled: true
       configurations:
