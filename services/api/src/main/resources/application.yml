@@ -18,3 +18,10 @@ micronaut:
             - Authorization
             - Accept
             - Origin
+
+app:
+  dynamodb:
+    table-name: ${DYNAMODB_TABLE:reading-insight-log-dev}
+    endpoint: ${DYNAMODB_ENDPOINT:}
+    region: ${AWS_REGION:ap-northeast-1}
+    user-id: ${APP_USER_ID:default}
