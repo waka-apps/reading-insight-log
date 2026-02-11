@@ -100,6 +100,7 @@
 - [ ] DynamoDBテーブル作成（オンデマンド）
 - [ ] PK/SK設計反映
 - [ ] GSI1作成
+- [ ] GSI2作成(review取得用)
 - [ ] RepositoryをDynamoDB実装に差し替え
 - [ ] 本一覧 / 本詳細 / Reviewが動くことを確認
 
