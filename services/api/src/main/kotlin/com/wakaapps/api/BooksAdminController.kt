@@ -6,11 +6,13 @@ import com.wakaapps.domain.DailyBookLimitExceededException
 import com.wakaapps.repository.BooksRepository
 import com.wakaapps.repository.InsightsRepository
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
+import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.validation.Validated
 import jakarta.validation.Valid
 
