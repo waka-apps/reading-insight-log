@@ -26,3 +26,4 @@ app:
     region: ${AWS_REGION:ap-northeast-1}
     user-id: ${APP_USER_ID:default}
     daily-insight-limit: ${DAILY_INSIGHT_LIMIT:25}
+    daily-book-limit: ${DAILY_BOOK_LIMIT:5}
