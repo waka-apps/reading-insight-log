@@ -2,18 +2,27 @@ package com.wakaapps.repository
 
 import com.wakaapps.config.DynamoDbConfig
 import com.wakaapps.domain.BookId
+import com.wakaapps.domain.DailyInsightLimitExceededException
 import com.wakaapps.domain.Insight
 import com.wakaapps.domain.InsightId
 import com.wakaapps.domain.ReviewResult
 import jakarta.inject.Singleton
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
+import software.amazon.awssdk.services.dynamodb.model.Put
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 import software.amazon.awssdk.services.dynamodb.model.Select
+import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem
+import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest
+import software.amazon.awssdk.services.dynamodb.model.Update
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 @Singleton
 class InsightsRepository(
@@ -40,6 +49,9 @@ class InsightsRepository(
         )
 
         val createdAtMillis = insight.createdAt.toEpochMilli()
+        val limit = config.dailyInsightLimit
+        val dateKey = LocalDate.ofInstant(insight.createdAt, ZoneOffset.UTC)
+            .format(DateTimeFormatter.BASIC_ISO_DATE)
         val item = mutableMapOf<String, AttributeValue>()
         item[PK] = s(userPk)
         item[SK] = s(insightSk(createdAtMillis, insight.id))
@@ -56,12 +68,64 @@ class InsightsRepository(
         item[GSI1PK] = s(gsi1Pk(bookId))
         item[GSI1SK] = s(gsi1Sk(createdAtMillis, insight.id))
 
-        dynamoDb.putItem(
-            PutItemRequest.builder()
-                .tableName(tableName)
-                .item(item)
-                .build()
-        )
+        try {
+            dynamoDb.transactWriteItems(
+                TransactWriteItemsRequest.builder()
+                    .transactItems(
+                        TransactWriteItem.builder()
+                            .update(
+                                Update.builder()
+                                    .tableName(tableName)
+                                    .key(
+                                        mapOf(
+                                            PK to s(userPk),
+                                            SK to s(counterSk(dateKey)),
+                                        )
+                                    )
+                                    .updateExpression(
+                                        "SET #count = if_not_exists(#count, :zero) + :inc, #date = :date, #type = :type"
+                                    )
+                                    .conditionExpression("attribute_not_exists(#count) OR #count < :limit")
+                                    .expressionAttributeNames(
+                                        mapOf(
+                                            "#count" to COUNTER_VALUE,
+                                            "#date" to COUNTER_DATE,
+                                            "#type" to TYPE,
+                                        )
+                                    )
+                                    .expressionAttributeValues(
+                                        mapOf(
+                                            ":zero" to n(0),
+                                            ":inc" to n(1),
+                                            ":limit" to n(limit.toLong()),
+                                            ":date" to s(dateKey),
+                                            ":type" to s(TYPE_COUNTER),
+                                        )
+                                    )
+                                    .build()
+                            )
+                            .build(),
+                        TransactWriteItem.builder()
+                            .put(
+                                Put.builder()
+                                    .tableName(tableName)
+                                    .item(item)
+                                    .conditionExpression("attribute_not_exists(#pk) AND attribute_not_exists(#sk)")
+                                    .expressionAttributeNames(
+                                        mapOf(
+                                            "#pk" to PK,
+                                            "#sk" to SK,
+                                        )
+                                    )
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+        } catch (e: ConditionalCheckFailedException) {
+            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey)
+        }
         return insight
     }
 
@@ -293,6 +357,9 @@ class InsightsRepository(
     private fun insightSk(createdAtMillis: Long, insightId: InsightId): String =
         "INSIGHT#${createdAtMillis.toString().padStart(13, '0')}#${insightId.value}"
 
+    private fun counterSk(dateKey: String): String =
+        "COUNTER#DAILY_INSIGHT#${dateKey}"
+
     private fun gsi1Pk(bookId: BookId): String =
         "USER#${config.userId}#BOOK#${bookId.value}"
 
@@ -313,6 +380,7 @@ class InsightsRepository(
         const val GSI1SK = "GSI1SK"
         const val TYPE = "type"
         const val TYPE_INSIGHT = "INSIGHT"
+        const val TYPE_COUNTER = "COUNTER"
         const val INSIGHT_ID = "insightId"
         const val BOOK_ID = "bookId"
         const val QUOTE = "quote"
@@ -322,5 +390,7 @@ class InsightsRepository(
         const val UPDATED_AT = "updatedAt"
         const val NEXT_REVIEW_AT = "nextReviewAt"
         const val REVIEW_INTERVAL_DAYS = "reviewIntervalDays"
+        const val COUNTER_VALUE = "counterValue"
+        const val COUNTER_DATE = "counterDate"
     }
 }
