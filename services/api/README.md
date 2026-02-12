@@ -78,6 +78,8 @@ DYNAMODB_ENDPOINT=http://localhost:8000
 DYNAMODB_TABLE=reading-insight-log-dev
 AWS_REGION=ap-northeast-1
 APP_USER_ID=local
+DAILY_INSIGHT_LIMIT=25
+DAILY_BOOK_LIMIT=5
 ```
 
 ### 4. direnv 設定
@@ -119,4 +121,3 @@ echo $DYNAMODB_ENDPOINT
 - 本番値は環境変数で設定する（`application.yml` に直書きしない）
 - `DYNAMODB_ENDPOINT` は未設定のまま（AWS向き）
 - テーブル名は `reading-insight-log-prod`
-
