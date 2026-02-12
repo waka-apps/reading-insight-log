@@ -8,4 +8,5 @@ class DynamoDbConfig {
     var endpoint: String? = null
     var region: String = "ap-northeast-1"
     var userId: String = "default"
+    var dailyInsightLimit: Int = 25
 }
