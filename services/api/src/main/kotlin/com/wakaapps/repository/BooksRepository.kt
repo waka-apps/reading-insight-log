@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest
+import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
 import software.amazon.awssdk.services.dynamodb.model.Update
 import java.time.Instant
 import java.time.LocalDate
@@ -103,6 +104,8 @@ class BooksRepository(
                     .build()
             )
         } catch (e: ConditionalCheckFailedException) {
+            throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey)
+        } catch (e: TransactionCanceledException) {
             throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey)
         }
         return book
