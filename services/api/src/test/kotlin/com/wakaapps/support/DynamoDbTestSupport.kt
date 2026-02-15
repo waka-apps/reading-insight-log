@@ -1,22 +1,7 @@
 package com.wakaapps.support
 
-import org.junit.jupiter.api.Assertions.fail
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import software.amazon.awssdk.services.dynamodb.model.BatchWriteItemRequest
-import software.amazon.awssdk.services.dynamodb.model.BillingMode
-import software.amazon.awssdk.services.dynamodb.model.CreateTableRequest
-import software.amazon.awssdk.services.dynamodb.model.DeleteRequest
-import software.amazon.awssdk.services.dynamodb.model.DescribeTableRequest
-import software.amazon.awssdk.services.dynamodb.model.GlobalSecondaryIndex
-import software.amazon.awssdk.services.dynamodb.model.KeySchemaElement
-import software.amazon.awssdk.services.dynamodb.model.KeyType
-import software.amazon.awssdk.services.dynamodb.model.Projection
-import software.amazon.awssdk.services.dynamodb.model.ProjectionType
-import software.amazon.awssdk.services.dynamodb.model.ResourceInUseException
-import software.amazon.awssdk.services.dynamodb.model.ScanRequest
-import software.amazon.awssdk.services.dynamodb.model.WriteRequest
+import software.amazon.awssdk.services.dynamodb.model.*
 import java.time.Duration
 
 object DynamoDbTestSupport {
