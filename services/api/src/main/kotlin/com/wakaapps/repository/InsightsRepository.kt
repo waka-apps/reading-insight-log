@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 import software.amazon.awssdk.services.dynamodb.model.Select
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest
+import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
 import software.amazon.awssdk.services.dynamodb.model.Update
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest
 import java.time.Instant
@@ -124,6 +125,8 @@ class InsightsRepository(
                     .build()
             )
         } catch (e: ConditionalCheckFailedException) {
+            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey)
+        } catch (e: TransactionCanceledException) {
             throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey)
         }
         return insight
