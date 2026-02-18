@@ -84,6 +84,7 @@ tasks.named<io.micronaut.gradle.docker.NativeImageDockerfile>("dockerfileNative"
 detekt {
     buildUponDefaultConfig = true
     allRules = false
+    config.setFrom(files("$projectDir/config/detekt/detekt.yml"))
 }
 
 ktlint {

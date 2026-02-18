@@ -1,0 +1,7 @@
+complexity:
+  LongMethod:
+    active: true
+    threshold: 120
+  TooManyFunctions:
+    active: true
+    thresholdInClasses: 20
