@@ -357,7 +357,7 @@ class InsightsRepository(
     }
 
     private fun insightSk(createdAtMillis: Long, insightId: InsightId): String =
-        "INSIGHT#${createdAtMillis.toString().padStart(13, '0')}#${insightId.value}"
+        "INSIGHT#${createdAtMillis.toString().padStart(TIMESTAMP_MILLIS_WIDTH, '0')}#${insightId.value}"
 
     private fun counterSk(dateKey: String): String =
         "COUNTER#DAILY_INSIGHT#${dateKey}"
@@ -366,7 +366,7 @@ class InsightsRepository(
         "USER#${config.userId}#BOOK#${bookId.value}"
 
     private fun gsi1Sk(createdAtMillis: Long, insightId: InsightId): String =
-        "INSIGHT#${createdAtMillis.toString().padStart(13, '0')}#${insightId.value}"
+        "INSIGHT#${createdAtMillis.toString().padStart(TIMESTAMP_MILLIS_WIDTH, '0')}#${insightId.value}"
 
     private fun s(value: String): AttributeValue =
         AttributeValue.builder().s(value).build()
@@ -394,5 +394,6 @@ class InsightsRepository(
         const val REVIEW_INTERVAL_DAYS = "reviewIntervalDays"
         const val COUNTER_VALUE = "counterValue"
         const val COUNTER_DATE = "counterDate"
+        const val TIMESTAMP_MILLIS_WIDTH = 13
     }
 }

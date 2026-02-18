@@ -1,7 +1,25 @@
 complexity:
+  # 長めのユースケース処理を許容するため、メソッド長の上限を緩める
   LongMethod:
     active: true
     threshold: 120
+  # Repository 等でメソッド数が増えやすいため、クラス内関数数の上限を緩める
   TooManyFunctions:
     active: true
     thresholdInClasses: 20
+style:
+  # ドメイン上意味のある数値のみを警告対象にし、慣習的な数値は除外する
+  MagicNumber:
+    active: true
+    # 算術・インデックス用途で頻出する値は許容
+    ignoreNumbers:
+      - "-1"
+      - "0"
+      - "1"
+      - "2"
+    # プロパティ初期値や定数宣言での数値は許容（意図が明確なため）
+    ignorePropertyDeclaration: true
+    ignoreConstantDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    # named argument で値の意味が明確な場合は許容
+    ignoreNamedArgument: true
