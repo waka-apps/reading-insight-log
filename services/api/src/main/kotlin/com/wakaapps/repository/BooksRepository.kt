@@ -95,9 +95,9 @@ class BooksRepository(
                     .build()
             )
         } catch (e: ConditionalCheckFailedException) {
-            throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey)
+            throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey, cause = e)
         } catch (e: TransactionCanceledException) {
-            throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey)
+            throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey, cause = e)
         }
         return book
     }

@@ -110,9 +110,9 @@ class InsightsRepository(
                     .build()
             )
         } catch (e: ConditionalCheckFailedException) {
-            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey)
+            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey, cause = e)
         } catch (e: TransactionCanceledException) {
-            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey)
+            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey, cause = e)
         }
         return insight
     }
