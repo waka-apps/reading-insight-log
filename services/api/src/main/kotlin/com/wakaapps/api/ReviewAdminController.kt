@@ -5,7 +5,12 @@ import com.wakaapps.api.dto.ReviewRequest
 import com.wakaapps.domain.InsightId
 import com.wakaapps.repository.InsightsRepository
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.PathVariable
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.exceptions.HttpStatusException
 import java.time.Instant
 

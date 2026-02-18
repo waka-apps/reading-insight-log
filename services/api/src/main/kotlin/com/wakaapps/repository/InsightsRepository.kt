@@ -1,10 +1,24 @@
 package com.wakaapps.repository
 
 import com.wakaapps.config.DynamoDbConfig
-import com.wakaapps.domain.*
+import com.wakaapps.domain.BookId
+import com.wakaapps.domain.DailyInsightLimitExceededException
+import com.wakaapps.domain.Insight
+import com.wakaapps.domain.InsightId
+import com.wakaapps.domain.ReviewResult
 import jakarta.inject.Singleton
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model.*
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
+import software.amazon.awssdk.services.dynamodb.model.Put
+import software.amazon.awssdk.services.dynamodb.model.QueryRequest
+import software.amazon.awssdk.services.dynamodb.model.ScanRequest
+import software.amazon.awssdk.services.dynamodb.model.Select
+import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem
+import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest
+import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
+import software.amazon.awssdk.services.dynamodb.model.Update
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset

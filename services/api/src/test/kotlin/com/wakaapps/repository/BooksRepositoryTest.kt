@@ -6,11 +6,13 @@ import com.wakaapps.support.DynamoDbTestSupport
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
