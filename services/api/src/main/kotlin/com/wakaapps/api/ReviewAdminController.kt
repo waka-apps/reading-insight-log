@@ -19,19 +19,22 @@ class ReviewAdminController(
     private val insightsRepository: InsightsRepository,
 ) {
     @Get("/review/today")
-    fun today(@QueryValue("now") now: String?): List<InsightResponse> {
-        val baseNow = now
-            ?.takeIf { it.isNotBlank() }
-            ?.let {
-                runCatching { Instant.parse(it) }
-                    .getOrElse {
-                        throw HttpStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "Invalid 'now'. Use ISO-8601 like 2026-02-11T10:00:00Z"
-                        )
-                    }
-            }
-            ?: Instant.now()
+    fun today(
+        @QueryValue("now") now: String?,
+    ): List<InsightResponse> {
+        val baseNow =
+            now
+                ?.takeIf { it.isNotBlank() }
+                ?.let {
+                    runCatching { Instant.parse(it) }
+                        .getOrElse {
+                            throw HttpStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Invalid 'now'. Use ISO-8601 like 2026-02-11T10:00:00Z",
+                            )
+                        }
+                }
+                ?: Instant.now()
 
         return insightsRepository
             .listReviewDue(baseNow)
@@ -43,10 +46,11 @@ class ReviewAdminController(
         @PathVariable insightId: String,
         @Body req: ReviewRequest,
     ): InsightResponse {
-        val updated = insightsRepository.updateReviewResult(
-            insightId = InsightId(insightId),
-            result = req.result,
-        )
+        val updated =
+            insightsRepository.updateReviewResult(
+                insightId = InsightId(insightId),
+                result = req.result,
+            )
         return InsightResponse.fromDomain(updated)
     }
 }

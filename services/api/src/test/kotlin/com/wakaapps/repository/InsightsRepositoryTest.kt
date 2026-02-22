@@ -21,7 +21,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfEnvironmentVariable(named = "RUN_DYNAMODB_TESTS", matches = "true")
 class InsightsRepositoryTest : TestPropertyProvider {
-
     @Inject
     lateinit var dynamoDb: DynamoDbClient
 

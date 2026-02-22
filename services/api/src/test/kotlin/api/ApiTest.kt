@@ -6,10 +6,8 @@ import jakarta.inject.Inject
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-
 @MicronautTest
 class ApiTest {
-
     @Inject
     lateinit var application: EmbeddedApplication<*>
 
@@ -17,5 +15,4 @@ class ApiTest {
     fun testItWorks() {
         Assertions.assertTrue(application.isRunning)
     }
-
 }

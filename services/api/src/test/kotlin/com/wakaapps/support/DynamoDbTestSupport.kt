@@ -16,7 +16,6 @@ import software.amazon.awssdk.services.dynamodb.model.ProjectionType
 import software.amazon.awssdk.services.dynamodb.model.ResourceInUseException
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 import software.amazon.awssdk.services.dynamodb.model.WriteRequest
-
 import java.time.Duration
 
 object DynamoDbTestSupport {
@@ -26,37 +25,70 @@ object DynamoDbTestSupport {
     private const val GSI1PK = "GSI1PK"
     private const val GSI1SK = "GSI1SK"
 
-    fun ensureTable(client: DynamoDbClient, tableName: String) {
+    fun ensureTable(
+        client: DynamoDbClient,
+        tableName: String,
+    ) {
         try {
             client.createTable(
-                CreateTableRequest.builder()
+                CreateTableRequest
+                    .builder()
                     .tableName(tableName)
                     .billingMode(BillingMode.PAY_PER_REQUEST)
                     .attributeDefinitions(
-                        AttributeDefinition.builder().attributeName(PK).attributeType("S").build(),
-                        AttributeDefinition.builder().attributeName(SK).attributeType("S").build(),
-                        AttributeDefinition.builder().attributeName(GSI1PK).attributeType("S").build(),
-                        AttributeDefinition.builder().attributeName(GSI1SK).attributeType("S").build(),
-                    )
-                    .keySchema(
-                        KeySchemaElement.builder().attributeName(PK).keyType(KeyType.HASH).build(),
-                        KeySchemaElement.builder().attributeName(SK).keyType(KeyType.RANGE).build(),
-                    )
-                    .globalSecondaryIndexes(
-                        GlobalSecondaryIndex.builder()
+                        AttributeDefinition
+                            .builder()
+                            .attributeName(PK)
+                            .attributeType("S")
+                            .build(),
+                        AttributeDefinition
+                            .builder()
+                            .attributeName(SK)
+                            .attributeType("S")
+                            .build(),
+                        AttributeDefinition
+                            .builder()
+                            .attributeName(GSI1PK)
+                            .attributeType("S")
+                            .build(),
+                        AttributeDefinition
+                            .builder()
+                            .attributeName(GSI1SK)
+                            .attributeType("S")
+                            .build(),
+                    ).keySchema(
+                        KeySchemaElement
+                            .builder()
+                            .attributeName(PK)
+                            .keyType(KeyType.HASH)
+                            .build(),
+                        KeySchemaElement
+                            .builder()
+                            .attributeName(SK)
+                            .keyType(KeyType.RANGE)
+                            .build(),
+                    ).globalSecondaryIndexes(
+                        GlobalSecondaryIndex
+                            .builder()
                             .indexName(GSI1)
                             .keySchema(
-                                KeySchemaElement.builder().attributeName(GSI1PK).keyType(KeyType.HASH).build(),
-                                KeySchemaElement.builder().attributeName(GSI1SK).keyType(KeyType.RANGE).build(),
-                            )
-                            .projection(
-                                Projection.builder()
+                                KeySchemaElement
+                                    .builder()
+                                    .attributeName(GSI1PK)
+                                    .keyType(KeyType.HASH)
+                                    .build(),
+                                KeySchemaElement
+                                    .builder()
+                                    .attributeName(GSI1SK)
+                                    .keyType(KeyType.RANGE)
+                                    .build(),
+                            ).projection(
+                                Projection
+                                    .builder()
                                     .projectionType(ProjectionType.ALL)
-                                    .build()
-                            )
-                            .build()
-                    )
-                    .build()
+                                    .build(),
+                            ).build(),
+                    ).build(),
             )
         } catch (_: ResourceInUseException) {
             // already exists
@@ -65,38 +97,46 @@ object DynamoDbTestSupport {
         waitForActive(client, tableName)
     }
 
-    fun clearTable(client: DynamoDbClient, tableName: String) {
+    fun clearTable(
+        client: DynamoDbClient,
+        tableName: String,
+    ) {
         var lastKey: Map<String, AttributeValue>? = null
         do {
-            val response = client.scan(
-                ScanRequest.builder()
-                    .tableName(tableName)
-                    .exclusiveStartKey(lastKey)
-                    .projectionExpression("#pk, #sk")
-                    .expressionAttributeNames(
-                        mapOf(
-                            "#pk" to PK,
-                            "#sk" to SK,
-                        )
-                    )
-                    .build()
-            )
-
-            val deletes = response.items().map { item ->
-                val key = mapOf(
-                    PK to item[PK]!!,
-                    SK to item[SK]!!,
+            val response =
+                client.scan(
+                    ScanRequest
+                        .builder()
+                        .tableName(tableName)
+                        .exclusiveStartKey(lastKey)
+                        .projectionExpression("#pk, #sk")
+                        .expressionAttributeNames(
+                            mapOf(
+                                "#pk" to PK,
+                                "#sk" to SK,
+                            ),
+                        ).build(),
                 )
-                WriteRequest.builder()
-                    .deleteRequest(DeleteRequest.builder().key(key).build())
-                    .build()
-            }
+
+            val deletes =
+                response.items().map { item ->
+                    val key =
+                        mapOf(
+                            PK to item[PK]!!,
+                            SK to item[SK]!!,
+                        )
+                    WriteRequest
+                        .builder()
+                        .deleteRequest(DeleteRequest.builder().key(key).build())
+                        .build()
+                }
 
             deletes.chunked(25).forEach { batch ->
                 client.batchWriteItem(
-                    BatchWriteItemRequest.builder()
+                    BatchWriteItemRequest
+                        .builder()
                         .requestItems(mapOf<String, List<WriteRequest>>(tableName to batch))
-                        .build()
+                        .build(),
                 )
             }
 
@@ -104,12 +144,18 @@ object DynamoDbTestSupport {
         } while (lastKey != null)
     }
 
-    private fun waitForActive(client: DynamoDbClient, tableName: String) {
+    private fun waitForActive(
+        client: DynamoDbClient,
+        tableName: String,
+    ) {
         val deadline = System.currentTimeMillis() + Duration.ofSeconds(10).toMillis()
         while (System.currentTimeMillis() < deadline) {
-            val status = client.describeTable(
-                DescribeTableRequest.builder().tableName(tableName).build()
-            ).table().tableStatusAsString()
+            val status =
+                client
+                    .describeTable(
+                        DescribeTableRequest.builder().tableName(tableName).build(),
+                    ).table()
+                    .tableStatusAsString()
             if (status == "ACTIVE") {
                 return
             }

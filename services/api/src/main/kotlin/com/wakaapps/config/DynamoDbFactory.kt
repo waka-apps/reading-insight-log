@@ -15,8 +15,10 @@ class DynamoDbFactory(
 ) {
     @Singleton
     fun dynamoDbClient(): DynamoDbClient {
-        val builder = DynamoDbClient.builder()
-            .region(Region.of(config.region))
+        val builder =
+            DynamoDbClient
+                .builder()
+                .region(Region.of(config.region))
 
         val endpoint = config.endpoint?.trim()?.takeIf { it.isNotEmpty() }
         return if (endpoint != null) {
@@ -25,10 +27,9 @@ class DynamoDbFactory(
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(
                     StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create("local", "local")
-                    )
-                )
-                .build()
+                        AwsBasicCredentials.create("local", "local"),
+                    ),
+                ).build()
         } else {
             // AWS: use standard provider chain (env, profile, instance role)
             builder
