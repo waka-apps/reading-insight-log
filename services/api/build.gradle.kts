@@ -5,12 +5,14 @@ plugins {
     id("io.micronaut.application") version "4.6.1"
     id("com.gradleup.shadow") version "8.3.9"
     id("io.micronaut.aot") version "4.6.1"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
 }
 
 version = "0.1"
 group = "api"
 
-val kotlinVersion=project.properties.get("kotlinVersion")
+val kotlinVersion = project.properties.get("kotlinVersion")
 repositories {
     mavenCentral()
 }
@@ -26,8 +28,8 @@ dependencies {
     implementation("software.amazon.awssdk:dynamodb")
     implementation("software.amazon.awssdk:auth")
     implementation("software.amazon.awssdk:regions")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     compileOnly("io.micronaut:micronaut-http-client")
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -49,8 +51,6 @@ application {
 java {
     sourceCompatibility = JavaVersion.toVersion("21")
 }
-
-
 graalvmNative.toolchainDetection = false
 
 micronaut {
@@ -73,8 +73,20 @@ micronaut {
         replaceLogbackXml = true
     }
 }
-
-
 tasks.named<io.micronaut.gradle.docker.NativeImageDockerfile>("dockerfileNative") {
     jdkVersion = "21"
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom(files("$projectDir/config/detekt/detekt.yml"))
+}
+
+ktlint {
+    // Use plugin default ktlint version unless you want to pin it.
+}
+
+tasks.named("check") {
+    dependsOn("detekt", "ktlintCheck")
 }

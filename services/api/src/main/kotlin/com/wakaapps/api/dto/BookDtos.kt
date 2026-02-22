@@ -21,7 +21,10 @@ data class BookResponse(
     val insightCount: Int = 0,
 ) {
     companion object {
-        fun from(book: Book, insightCount: Int): BookResponse =
+        fun from(
+            book: Book,
+            insightCount: Int,
+        ): BookResponse =
             BookResponse(
                 id = book.id.value,
                 title = book.title,

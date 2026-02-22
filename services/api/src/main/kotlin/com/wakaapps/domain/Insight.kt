@@ -2,7 +2,7 @@ package com.wakaapps.domain
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.*
+import java.util.UUID
 
 data class Insight(
     val id: InsightId,
@@ -39,11 +39,15 @@ data class Insight(
         }
     }
 
-    fun applyReview(result: ReviewResult, now: Instant): Insight {
-        val nextInterval = when (result) {
-            ReviewResult.REMEMBERED -> reviewIntervalDays * 2
-            ReviewResult.UNCERTAIN -> 1
-        }
+    fun applyReview(
+        result: ReviewResult,
+        now: Instant,
+    ): Insight {
+        val nextInterval =
+            when (result) {
+                ReviewResult.REMEMBERED -> reviewIntervalDays * 2
+                ReviewResult.UNCERTAIN -> 1
+            }
         return copy(
             reviewIntervalDays = nextInterval,
             nextReviewAt = now.plus(nextInterval.toLong(), ChronoUnit.DAYS),

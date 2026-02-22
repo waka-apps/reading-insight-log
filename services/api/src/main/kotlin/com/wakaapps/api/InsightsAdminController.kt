@@ -3,11 +3,14 @@ package com.wakaapps.api
 import com.wakaapps.api.dto.CreateInsightRequest
 import com.wakaapps.api.dto.InsightResponse
 import com.wakaapps.domain.BookId
-import com.wakaapps.domain.DailyInsightLimitExceededException
 import com.wakaapps.repository.BooksRepository
 import com.wakaapps.repository.InsightsRepository
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.PathVariable
+import io.micronaut.http.annotation.Post
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.validation.Validated
 import jakarta.validation.Valid
@@ -26,19 +29,13 @@ class InsightsAdminController(
         booksRepository.findById(BookId(bookId))
             ?: throw HttpStatusException(HttpStatus.NOT_FOUND, "Book not found: $bookId")
 
-        val insight = try {
+        val insight =
             insightsRepository.add(
                 bookId = BookId(bookId),
                 quote = req.quote,
                 interpretation = req.interpretation,
                 tags = req.tags ?: emptyList(),
             )
-        } catch (e: DailyInsightLimitExceededException) {
-            throw HttpStatusException(
-                HttpStatus.TOO_MANY_REQUESTS,
-                "Daily insight limit exceeded: ${e.limit} (${e.dateKey})"
-            )
-        }
         return InsightResponse.fromDomain(insight)
     }
 

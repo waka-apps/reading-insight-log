@@ -1,7 +1,7 @@
 package com.wakaapps.domain
 
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 data class Book(
     val id: BookId,

@@ -10,7 +10,6 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest
 import software.amazon.awssdk.services.dynamodb.model.Put
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest
@@ -29,15 +28,21 @@ class BooksRepository(
     private val tableName = config.tableName
     private val userPk = "USER#${config.userId}"
 
-    fun create(title: String, author: String?): Book {
-        val book = Book.createInitial(
-            title = title,
-            author = author
-        )
+    fun create(
+        title: String,
+        author: String?,
+    ): Book {
+        val book =
+            Book.createInitial(
+                title = title,
+                author = author,
+            )
 
         val limit = config.dailyBookLimit
-        val dateKey = LocalDate.ofInstant(book.createdAt, ZoneOffset.UTC)
-            .format(DateTimeFormatter.BASIC_ISO_DATE)
+        val dateKey =
+            LocalDate
+                .ofInstant(book.createdAt, ZoneOffset.UTC)
+                .format(DateTimeFormatter.BASIC_ISO_DATE)
         val item = mutableMapOf<String, AttributeValue>()
         item[PK] = s(userPk)
         item[SK] = s(bookSk(book.id))
@@ -50,44 +55,43 @@ class BooksRepository(
 
         try {
             dynamoDb.transactWriteItems(
-                TransactWriteItemsRequest.builder()
+                TransactWriteItemsRequest
+                    .builder()
                     .transactItems(
-                        TransactWriteItem.builder()
+                        TransactWriteItem
+                            .builder()
                             .update(
-                                Update.builder()
+                                Update
+                                    .builder()
                                     .tableName(tableName)
                                     .key(
                                         mapOf(
                                             PK to s(userPk),
                                             SK to s(counterSk(dateKey)),
-                                        )
-                                    )
-                                    .updateExpression(
-                                        "SET #count = if_not_exists(#count, :zero) + :inc, #date = :date, #type = :type"
-                                    )
-                                    .conditionExpression("attribute_not_exists(#count) OR #count < :limit")
+                                        ),
+                                    ).updateExpression(COUNTER_UPDATE_EXPRESSION)
+                                    .conditionExpression(COUNTER_LIMIT_CONDITION)
                                     .expressionAttributeNames(
                                         mapOf(
                                             "#count" to COUNTER_VALUE,
                                             "#date" to COUNTER_DATE,
                                             "#type" to TYPE,
-                                        )
-                                    )
-                                    .expressionAttributeValues(
+                                        ),
+                                    ).expressionAttributeValues(
                                         mapOf(
                                             ":zero" to n(0),
                                             ":inc" to n(1),
                                             ":limit" to n(limit.toLong()),
                                             ":date" to s(dateKey),
                                             ":type" to s(TYPE_COUNTER),
-                                        )
-                                    )
-                                    .build()
-                            )
-                            .build(),
-                        TransactWriteItem.builder()
+                                        ),
+                                    ).build(),
+                            ).build(),
+                        TransactWriteItem
+                            .builder()
                             .put(
-                                Put.builder()
+                                Put
+                                    .builder()
                                     .tableName(tableName)
                                     .item(item)
                                     .conditionExpression("attribute_not_exists(#pk) AND attribute_not_exists(#sk)")
@@ -95,18 +99,15 @@ class BooksRepository(
                                         mapOf(
                                             "#pk" to PK,
                                             "#sk" to SK,
-                                        )
-                                    )
-                                    .build()
-                            )
-                            .build()
-                    )
-                    .build()
+                                        ),
+                                    ).build(),
+                            ).build(),
+                    ).build(),
             )
         } catch (e: ConditionalCheckFailedException) {
-            throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey)
+            throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey, cause = e)
         } catch (e: TransactionCanceledException) {
-            throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey)
+            throw DailyBookLimitExceededException(limit = limit, dateKey = dateKey, cause = e)
         }
         return book
     }
@@ -119,17 +120,18 @@ class BooksRepository(
     }
 
     fun findById(id: BookId): Book? {
-        val response = dynamoDb.getItem(
-            GetItemRequest.builder()
-                .tableName(tableName)
-                .key(
-                    mapOf(
-                        PK to s(userPk),
-                        SK to s(bookSk(id))
-                    )
-                )
-                .build()
-        )
+        val response =
+            dynamoDb.getItem(
+                GetItemRequest
+                    .builder()
+                    .tableName(tableName)
+                    .key(
+                        mapOf(
+                            PK to s(userPk),
+                            SK to s(bookSk(id)),
+                        ),
+                    ).build(),
+            )
         val item = response.item()
         if (item == null || item.isEmpty()) {
             return null
@@ -142,23 +144,23 @@ class BooksRepository(
         var lastKey: Map<String, AttributeValue>? = null
 
         do {
-            val request = QueryRequest.builder()
-                .tableName(tableName)
-                .keyConditionExpression("#pk = :pk AND begins_with(#sk, :skPrefix)")
-                .expressionAttributeNames(
-                    mapOf(
-                        "#pk" to PK,
-                        "#sk" to SK,
-                    )
-                )
-                .expressionAttributeValues(
-                    mapOf(
-                        ":pk" to s(userPk),
-                        ":skPrefix" to s("BOOK#"),
-                    )
-                )
-                .exclusiveStartKey(lastKey)
-                .build()
+            val request =
+                QueryRequest
+                    .builder()
+                    .tableName(tableName)
+                    .keyConditionExpression("#pk = :pk AND begins_with(#sk, :skPrefix)")
+                    .expressionAttributeNames(
+                        mapOf(
+                            "#pk" to PK,
+                            "#sk" to SK,
+                        ),
+                    ).expressionAttributeValues(
+                        mapOf(
+                            ":pk" to s(userPk),
+                            ":skPrefix" to s("BOOK#"),
+                        ),
+                    ).exclusiveStartKey(lastKey)
+                    .build()
 
             val response = dynamoDb.query(request)
             items.addAll(response.items())
@@ -185,14 +187,11 @@ class BooksRepository(
 
     private fun bookSk(bookId: BookId): String = "BOOK#${bookId.value}"
 
-    private fun counterSk(dateKey: String): String =
-        "COUNTER#DAILY_BOOK#${dateKey}"
+    private fun counterSk(dateKey: String): String = "COUNTER#DAILY_BOOK#$dateKey"
 
-    private fun s(value: String): AttributeValue =
-        AttributeValue.builder().s(value).build()
+    private fun s(value: String): AttributeValue = AttributeValue.builder().s(value).build()
 
-    private fun n(value: Long): AttributeValue =
-        AttributeValue.builder().n(value.toString()).build()
+    private fun n(value: Long): AttributeValue = AttributeValue.builder().n(value.toString()).build()
 
     private companion object {
         const val PK = "PK"
@@ -200,6 +199,9 @@ class BooksRepository(
         const val TYPE = "type"
         const val TYPE_BOOK = "BOOK"
         const val TYPE_COUNTER = "COUNTER"
+        const val COUNTER_UPDATE_EXPRESSION =
+            "SET #count = if_not_exists(#count, :zero) + :inc, #date = :date, #type = :type"
+        const val COUNTER_LIMIT_CONDITION = "attribute_not_exists(#count) OR #count < :limit"
         const val BOOK_ID = "bookId"
         const val TITLE = "title"
         const val AUTHOR = "author"

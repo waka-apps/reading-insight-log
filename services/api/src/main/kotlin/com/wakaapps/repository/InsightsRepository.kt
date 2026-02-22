@@ -11,7 +11,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
 import software.amazon.awssdk.services.dynamodb.model.Put
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 import software.amazon.awssdk.services.dynamodb.model.Select
@@ -42,17 +41,20 @@ class InsightsRepository(
         interpretation: String,
         tags: List<String>,
     ): Insight {
-        val insight = Insight.createInitial(
-            bookId = bookId,
-            quote = quote,
-            interpretation = interpretation,
-            tags = tags,
-        )
+        val insight =
+            Insight.createInitial(
+                bookId = bookId,
+                quote = quote,
+                interpretation = interpretation,
+                tags = tags,
+            )
 
         val createdAtMillis = insight.createdAt.toEpochMilli()
         val limit = config.dailyInsightLimit
-        val dateKey = LocalDate.ofInstant(insight.createdAt, ZoneOffset.UTC)
-            .format(DateTimeFormatter.BASIC_ISO_DATE)
+        val dateKey =
+            LocalDate
+                .ofInstant(insight.createdAt, ZoneOffset.UTC)
+                .format(DateTimeFormatter.BASIC_ISO_DATE)
         val item = mutableMapOf<String, AttributeValue>()
         item[PK] = s(userPk)
         item[SK] = s(insightSk(createdAtMillis, insight.id))
@@ -71,44 +73,43 @@ class InsightsRepository(
 
         try {
             dynamoDb.transactWriteItems(
-                TransactWriteItemsRequest.builder()
+                TransactWriteItemsRequest
+                    .builder()
                     .transactItems(
-                        TransactWriteItem.builder()
+                        TransactWriteItem
+                            .builder()
                             .update(
-                                Update.builder()
+                                Update
+                                    .builder()
                                     .tableName(tableName)
                                     .key(
                                         mapOf(
                                             PK to s(userPk),
                                             SK to s(counterSk(dateKey)),
-                                        )
-                                    )
-                                    .updateExpression(
-                                        "SET #count = if_not_exists(#count, :zero) + :inc, #date = :date, #type = :type"
-                                    )
-                                    .conditionExpression("attribute_not_exists(#count) OR #count < :limit")
+                                        ),
+                                    ).updateExpression(COUNTER_UPDATE_EXPRESSION)
+                                    .conditionExpression(COUNTER_LIMIT_CONDITION)
                                     .expressionAttributeNames(
                                         mapOf(
                                             "#count" to COUNTER_VALUE,
                                             "#date" to COUNTER_DATE,
                                             "#type" to TYPE,
-                                        )
-                                    )
-                                    .expressionAttributeValues(
+                                        ),
+                                    ).expressionAttributeValues(
                                         mapOf(
                                             ":zero" to n(0),
                                             ":inc" to n(1),
                                             ":limit" to n(limit.toLong()),
                                             ":date" to s(dateKey),
                                             ":type" to s(TYPE_COUNTER),
-                                        )
-                                    )
-                                    .build()
-                            )
-                            .build(),
-                        TransactWriteItem.builder()
+                                        ),
+                                    ).build(),
+                            ).build(),
+                        TransactWriteItem
+                            .builder()
                             .put(
-                                Put.builder()
+                                Put
+                                    .builder()
                                     .tableName(tableName)
                                     .item(item)
                                     .conditionExpression("attribute_not_exists(#pk) AND attribute_not_exists(#sk)")
@@ -116,18 +117,15 @@ class InsightsRepository(
                                         mapOf(
                                             "#pk" to PK,
                                             "#sk" to SK,
-                                        )
-                                    )
-                                    .build()
-                            )
-                            .build()
-                    )
-                    .build()
+                                        ),
+                                    ).build(),
+                            ).build(),
+                    ).build(),
             )
         } catch (e: ConditionalCheckFailedException) {
-            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey)
+            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey, cause = e)
         } catch (e: TransactionCanceledException) {
-            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey)
+            throw DailyInsightLimitExceededException(limit = limit, dateKey = dateKey, cause = e)
         }
         return insight
     }
@@ -159,42 +157,40 @@ class InsightsRepository(
         result: ReviewResult,
         now: Instant = Instant.now(),
     ): Insight {
-        val currentItem = findInsightItemById(insightId)
-            ?: throw NoSuchElementException("Insight not found: ${insightId.value}")
+        val currentItem =
+            findInsightItemById(insightId)
+                ?: throw NoSuchElementException("Insight not found: ${insightId.value}")
 
         val current = toInsight(currentItem)
         val updated = current.applyReview(result = result, now = now)
 
         dynamoDb.updateItem(
-            UpdateItemRequest.builder()
+            UpdateItemRequest
+                .builder()
                 .tableName(tableName)
                 .key(
                     mapOf(
                         PK to currentItem[PK]!!,
                         SK to currentItem[SK]!!,
-                    )
-                )
-                .updateExpression("SET #nextReviewAt = :nextReviewAt, #reviewIntervalDays = :reviewIntervalDays")
+                    ),
+                ).updateExpression("SET #nextReviewAt = :nextReviewAt, #reviewIntervalDays = :reviewIntervalDays")
                 .expressionAttributeNames(
                     mapOf(
                         "#nextReviewAt" to NEXT_REVIEW_AT,
                         "#reviewIntervalDays" to REVIEW_INTERVAL_DAYS,
-                    )
-                )
-                .expressionAttributeValues(
+                    ),
+                ).expressionAttributeValues(
                     mapOf(
                         ":nextReviewAt" to n(updated.nextReviewAt.toEpochMilli()),
                         ":reviewIntervalDays" to n(updated.reviewIntervalDays.toLong()),
-                    )
-                )
-                .build()
+                    ),
+                ).build(),
         )
 
         return updated
     }
 
-    fun findById(insightId: InsightId): Insight? =
-        findInsightItemById(insightId)?.let { toInsight(it) }
+    fun findById(insightId: InsightId): Insight? = findInsightItemById(insightId)?.let { toInsight(it) }
 
     fun countByBooks(bookIds: List<BookId>): Map<BookId, Int> {
         if (bookIds.isEmpty()) {
@@ -214,25 +210,25 @@ class InsightsRepository(
         var lastKey: Map<String, AttributeValue>? = null
 
         do {
-            val request = QueryRequest.builder()
-                .tableName(tableName)
-                .indexName(GSI1)
-                .keyConditionExpression("#gsi1pk = :pk AND begins_with(#gsi1sk, :skPrefix)")
-                .expressionAttributeNames(
-                    mapOf(
-                        "#gsi1pk" to GSI1PK,
-                        "#gsi1sk" to GSI1SK,
-                    )
-                )
-                .expressionAttributeValues(
-                    mapOf(
-                        ":pk" to s(gsi1Pk(bookId)),
-                        ":skPrefix" to s("INSIGHT#"),
-                    )
-                )
-                .scanIndexForward(false)
-                .exclusiveStartKey(lastKey)
-                .build()
+            val request =
+                QueryRequest
+                    .builder()
+                    .tableName(tableName)
+                    .indexName(GSI1)
+                    .keyConditionExpression("#gsi1pk = :pk AND begins_with(#gsi1sk, :skPrefix)")
+                    .expressionAttributeNames(
+                        mapOf(
+                            "#gsi1pk" to GSI1PK,
+                            "#gsi1sk" to GSI1SK,
+                        ),
+                    ).expressionAttributeValues(
+                        mapOf(
+                            ":pk" to s(gsi1Pk(bookId)),
+                            ":skPrefix" to s("INSIGHT#"),
+                        ),
+                    ).scanIndexForward(false)
+                    .exclusiveStartKey(lastKey)
+                    .build()
 
             val response = dynamoDb.query(request)
             items.addAll(response.items())
@@ -247,25 +243,25 @@ class InsightsRepository(
         var lastKey: Map<String, AttributeValue>? = null
 
         do {
-            val request = QueryRequest.builder()
-                .tableName(tableName)
-                .indexName(GSI1)
-                .keyConditionExpression("#gsi1pk = :pk AND begins_with(#gsi1sk, :skPrefix)")
-                .expressionAttributeNames(
-                    mapOf(
-                        "#gsi1pk" to GSI1PK,
-                        "#gsi1sk" to GSI1SK,
-                    )
-                )
-                .expressionAttributeValues(
-                    mapOf(
-                        ":pk" to s(gsi1Pk(bookId)),
-                        ":skPrefix" to s("INSIGHT#"),
-                    )
-                )
-                .select(Select.COUNT)
-                .exclusiveStartKey(lastKey)
-                .build()
+            val request =
+                QueryRequest
+                    .builder()
+                    .tableName(tableName)
+                    .indexName(GSI1)
+                    .keyConditionExpression("#gsi1pk = :pk AND begins_with(#gsi1sk, :skPrefix)")
+                    .expressionAttributeNames(
+                        mapOf(
+                            "#gsi1pk" to GSI1PK,
+                            "#gsi1sk" to GSI1SK,
+                        ),
+                    ).expressionAttributeValues(
+                        mapOf(
+                            ":pk" to s(gsi1Pk(bookId)),
+                            ":skPrefix" to s("INSIGHT#"),
+                        ),
+                    ).select(Select.COUNT)
+                    .exclusiveStartKey(lastKey)
+                    .build()
 
             val response = dynamoDb.query(request)
             total += response.count()
@@ -280,25 +276,25 @@ class InsightsRepository(
         var lastKey: Map<String, AttributeValue>? = null
 
         do {
-            val request = ScanRequest.builder()
-                .tableName(tableName)
-                .filterExpression("#pk = :pk AND #type = :type AND #nextReviewAt <= :now")
-                .expressionAttributeNames(
-                    mapOf(
-                        "#pk" to PK,
-                        "#type" to TYPE,
-                        "#nextReviewAt" to NEXT_REVIEW_AT,
-                    )
-                )
-                .expressionAttributeValues(
-                    mapOf(
-                        ":pk" to s(userPk),
-                        ":type" to s(TYPE_INSIGHT),
-                        ":now" to n(now.toEpochMilli()),
-                    )
-                )
-                .exclusiveStartKey(lastKey)
-                .build()
+            val request =
+                ScanRequest
+                    .builder()
+                    .tableName(tableName)
+                    .filterExpression("#pk = :pk AND #type = :type AND #nextReviewAt <= :now")
+                    .expressionAttributeNames(
+                        mapOf(
+                            "#pk" to PK,
+                            "#type" to TYPE,
+                            "#nextReviewAt" to NEXT_REVIEW_AT,
+                        ),
+                    ).expressionAttributeValues(
+                        mapOf(
+                            ":pk" to s(userPk),
+                            ":type" to s(TYPE_INSIGHT),
+                            ":now" to n(now.toEpochMilli()),
+                        ),
+                    ).exclusiveStartKey(lastKey)
+                    .build()
 
             val response = dynamoDb.scan(request)
             items.addAll(response.items())
@@ -309,25 +305,25 @@ class InsightsRepository(
     }
 
     private fun findInsightItemById(insightId: InsightId): Map<String, AttributeValue>? {
-        val request = ScanRequest.builder()
-            .tableName(tableName)
-            .filterExpression("#pk = :pk AND #type = :type AND #insightId = :id")
-            .expressionAttributeNames(
-                mapOf(
-                    "#pk" to PK,
-                    "#type" to TYPE,
-                    "#insightId" to INSIGHT_ID,
-                )
-            )
-            .expressionAttributeValues(
-                mapOf(
-                    ":pk" to s(userPk),
-                    ":type" to s(TYPE_INSIGHT),
-                    ":id" to s(insightId.value),
-                )
-            )
-            .limit(1)
-            .build()
+        val request =
+            ScanRequest
+                .builder()
+                .tableName(tableName)
+                .filterExpression("#pk = :pk AND #type = :type AND #insightId = :id")
+                .expressionAttributeNames(
+                    mapOf(
+                        "#pk" to PK,
+                        "#type" to TYPE,
+                        "#insightId" to INSIGHT_ID,
+                    ),
+                ).expressionAttributeValues(
+                    mapOf(
+                        ":pk" to s(userPk),
+                        ":type" to s(TYPE_INSIGHT),
+                        ":id" to s(insightId.value),
+                    ),
+                ).limit(1)
+                .build()
 
         val response = dynamoDb.scan(request)
         return response.items().firstOrNull()
@@ -357,23 +353,23 @@ class InsightsRepository(
         )
     }
 
-    private fun insightSk(createdAtMillis: Long, insightId: InsightId): String =
-        "INSIGHT#${createdAtMillis.toString().padStart(13, '0')}#${insightId.value}"
+    private fun insightSk(
+        createdAtMillis: Long,
+        insightId: InsightId,
+    ): String = "INSIGHT#${createdAtMillis.toString().padStart(TIMESTAMP_MILLIS_WIDTH, '0')}#${insightId.value}"
 
-    private fun counterSk(dateKey: String): String =
-        "COUNTER#DAILY_INSIGHT#${dateKey}"
+    private fun counterSk(dateKey: String): String = "COUNTER#DAILY_INSIGHT#$dateKey"
 
-    private fun gsi1Pk(bookId: BookId): String =
-        "USER#${config.userId}#BOOK#${bookId.value}"
+    private fun gsi1Pk(bookId: BookId): String = "USER#${config.userId}#BOOK#${bookId.value}"
 
-    private fun gsi1Sk(createdAtMillis: Long, insightId: InsightId): String =
-        "INSIGHT#${createdAtMillis.toString().padStart(13, '0')}#${insightId.value}"
+    private fun gsi1Sk(
+        createdAtMillis: Long,
+        insightId: InsightId,
+    ): String = "INSIGHT#${createdAtMillis.toString().padStart(TIMESTAMP_MILLIS_WIDTH, '0')}#${insightId.value}"
 
-    private fun s(value: String): AttributeValue =
-        AttributeValue.builder().s(value).build()
+    private fun s(value: String): AttributeValue = AttributeValue.builder().s(value).build()
 
-    private fun n(value: Long): AttributeValue =
-        AttributeValue.builder().n(value.toString()).build()
+    private fun n(value: Long): AttributeValue = AttributeValue.builder().n(value.toString()).build()
 
     private companion object {
         const val PK = "PK"
@@ -384,6 +380,9 @@ class InsightsRepository(
         const val TYPE = "type"
         const val TYPE_INSIGHT = "INSIGHT"
         const val TYPE_COUNTER = "COUNTER"
+        const val COUNTER_UPDATE_EXPRESSION =
+            "SET #count = if_not_exists(#count, :zero) + :inc, #date = :date, #type = :type"
+        const val COUNTER_LIMIT_CONDITION = "attribute_not_exists(#count) OR #count < :limit"
         const val INSIGHT_ID = "insightId"
         const val BOOK_ID = "bookId"
         const val QUOTE = "quote"
@@ -395,5 +394,6 @@ class InsightsRepository(
         const val REVIEW_INTERVAL_DAYS = "reviewIntervalDays"
         const val COUNTER_VALUE = "counterValue"
         const val COUNTER_DATE = "counterDate"
+        const val TIMESTAMP_MILLIS_WIDTH = 13
     }
 }
